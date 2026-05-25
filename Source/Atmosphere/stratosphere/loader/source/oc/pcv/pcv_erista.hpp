@@ -147,6 +147,17 @@ namespace ams::ldr::hoc::pcv::erista {
         { ICOSA_4GB_HYNIX_H9HCNNNBPUMLHR_NLE,       T210SdevEmcDvfsTableH4gb01, },
     };
 
+    constexpr u32 MtcBrAsm   = 0xD61F0140;
+    constexpr u32 MtcMovAsm  = 0x52800148;
+    constexpr u32 MtcAdrpAsm = 0xD0000081;
+    constexpr u32 MtcBlIns = 0x97ffae64;
+    constexpr u32 MtcAddAsm  = 0x91131821;
+    
+    ALWAYS_INLINE bool MemMtcGetGetTablePatternFn(u32 *ptr) {
+        /* This builds an address that gets returned, so the register must be x0 by convention. */
+        return AsmCompareAddNoImm12(*ptr, MtcAddAsm);
+    }
+
     void Patch(uintptr_t mapped_nso, size_t nso_size);
 
 }
