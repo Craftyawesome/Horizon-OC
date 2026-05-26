@@ -358,7 +358,7 @@ namespace board {
                     continue;
                 }
 
-                /* Assuming mariko. */
+                /* 800mV on Mariko, 950mV on Erista. */
                 u32 vmax = GetSocType() == HocClkSocType_Mariko ? 800 : 950;
                 constexpr u32 GpuVoltageTableOffset = 312;
                 if (!std::memcmp(&buffer[index + GpuVoltageTableOffset], &vmax, sizeof(vmax))) {
