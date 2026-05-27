@@ -53,7 +53,7 @@ namespace board {
                 case 2026 ... 2100:
                     gpuBracket = 2;
                     break;
-                case 2100 ... 2200:
+                case 2101 ... 2200:
                     gpuBracket = 3;
                     break;
                 default:
