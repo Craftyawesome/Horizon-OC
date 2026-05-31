@@ -162,8 +162,10 @@ jobs:
           hactool -t kip1 out/nintendo_nx_arm64_armv8a/release/loader.kip --uncompress=hoc.kip
           cp hoc.kip ../../../dist/atmosphere/kips/hoc.kip
           
-      - name: ccache stats
+      - name: ccache stat
         run: ccache --show-stats
+             ccache -s
+             ccache --show-config
 
       # -------------------------------------------------
       # Upload ZIP artifact
