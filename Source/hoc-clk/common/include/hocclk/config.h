@@ -509,7 +509,7 @@ static inline uint64_t hocclkDefaultConfigValue(HocClkConfigValue val)
         case HocClkConfigValue_AutoRamCpuCpuOCFreq:
             return 1683000ULL;
         case HocClkConfigValue_AutoRamCpuRamOCThreshold:
-            return 2133000ULL;
+            return 2666000ULL;
         case HocClkConfigValue_ThermalThrottleThreshold:
             return 70ULL;
         case HocClkConfigValue_CpuGovernorMinimumFreq:
