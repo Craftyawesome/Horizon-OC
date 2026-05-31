@@ -79,13 +79,16 @@ jobs:
 
       - name: Configure ccache
         run: |
-          export CCACHE_DIR="$HOME/.cache/ccache"
+          export CCACHE_DIR="/github/home/.cache/ccache"
           export CCACHE_BASEDIR="$GITHUB_WORKSPACE"
           export CCACHE_COMPILERCHECK=content
           export CCACHE_NOHASHDIR=true
-          echo "CCACHE_DIR=$HOME/.cache/ccache" >> $GITHUB_ENV
+          echo "CCACHE_DIR=/github/home/.cache/ccache" >> $GITHUB_ENV
           ccache --set-config=max_size=10G
           ccache --set-config=compiler_check=content
+          ccache --set-config=hash_dir=false
+          ls -lah /github/home/.cache/ccache
+          ccache -s
 
       - name: Build Libnx
         shell: bash
