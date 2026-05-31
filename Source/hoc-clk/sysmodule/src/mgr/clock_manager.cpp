@@ -250,7 +250,8 @@ namespace clockManager {
             return;
         }
 
-        board::SetMarikoGm20bCutoff(0);
+        if (module == HocClkModule_GPU && board::GetSocType() == HocClkSocType_Mariko)
+            board::SetMarikoGm20bCutoff(0);
 
         for (std::uint32_t i = 0; i < count; i++) {
             if (!IsAssignableHz(module, freqs[i])) {
