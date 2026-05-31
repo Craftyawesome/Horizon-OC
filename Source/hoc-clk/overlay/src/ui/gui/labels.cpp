@@ -93,24 +93,38 @@ std::map<uint32_t, std::string> gpu_freq_label_m = {
     {460800000, "Handheld"},
     {614400000, "Handheld Safe Max"},
     {768000000, "Docked"},
-    {1075200000, "Safe Max"},
-    {1305600000, "Unsafe Max"},
-    {1536000000, "Absolute Max"},
+    {998400000, "Safe Max"},
 };
 
 std::map<uint32_t, std::string> gpu_freq_label_m_slt = {
     {76800000, "Boost Mode"},
     {307200000, "Handheld"},
+    {345600000, "Handheld"},
     {384000000, "Handheld"},
+    {422400000, "Handheld"},
     {460800000, "Handheld"},
     {614400000, "Handheld Safe Max"},
     {768000000, "Docked"},
-    {1152200000, "Safe Max"},
+    {1075200000, "Safe Max"},
     {1305600000, "Unsafe Max"},
     {1536000000, "Absolute Max"},
 };
 
 std::map<uint32_t, std::string> gpu_freq_label_m_hiopt = {
+    {76800000, "Boost Mode"},
+    {307200000, "Handheld"},
+    {345600000, "Handheld"},
+    {384000000, "Handheld"},
+    {422400000, "Handheld"},
+    {460800000, "Handheld"},
+    {614400000, "Handheld Safe Max"},
+    {768000000, "Docked"},
+    {1152000000, "Safe Max"},
+    {1305600000, "Unsafe Max"},
+    {1536000000, "Absolute Max"},
+};
+
+std::map<uint32_t, std::string> gpu_freq_label_m_highuv = {
     {76800000, "Boost Mode"},
     {307200000, "Handheld"},
     {384000000, "Handheld"},
@@ -122,10 +136,12 @@ std::map<uint32_t, std::string> gpu_freq_label_m_hiopt = {
     {1536000000, "Absolute Max"},
 };
 
-std::map<uint32_t, std::string>* marikoUV[3] {
+std::map<uint32_t, std::string>* marikoUV[5] {
     &gpu_freq_label_m,
     &gpu_freq_label_m_slt,
     &gpu_freq_label_m_hiopt,
+    &gpu_freq_label_m_hiopt,
+    &gpu_freq_label_m_highuv,
 };
 
 
