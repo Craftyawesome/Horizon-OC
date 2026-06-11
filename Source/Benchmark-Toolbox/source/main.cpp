@@ -16,6 +16,8 @@ extern "C" {
 #include "gpu_bw.h"
 #include "gpu_stress.h"
 #include "hoc_clk.h"
+#include "mt_cpu.h"
+#include "mt_gpu.h"
 #include "run_furmark.h"
 }
 
@@ -476,6 +478,224 @@ class FurmarkTab : public brls::Box {
     brls::Label *statusL;
 };
 
+class MemtesterTab : public brls::Box {
+    public:
+    MemtesterTab() {
+        this->setAxis(brls::Axis::COLUMN);
+        this->setGrow(1.0f);
+        this->setPadding(40.0f, 60.0f, 40.0f, 60.0f);
+
+        auto *modeRow = new brls::Box(brls::Axis::ROW);
+        modeRow->setMarginBottom(10.0f);
+        auto *ml = new brls::Label();
+        ml->setText("Mode");
+        ml->setGrow(1.0f);
+        modeRow->addView(ml);
+        modeVal = new brls::Label();
+        modeVal->setText(modeName(mode));
+        modeRow->addView(modeVal);
+        this->addView(modeRow);
+
+        auto *hint = new brls::Label();
+        hint->setText("Use L / R to select the memtester mode. Press A to run.");
+        hint->setFontSize(15.0f);
+        hint->setTextColor(nvgRGB(150, 150, 150));
+        hint->setMarginBottom(14.0f);
+        this->addView(hint);
+
+        toggle = new brls::Button();
+        toggle->setText("Start");
+        toggle->registerClickAction([this](brls::View *) {
+            onToggle();
+            return true;
+        });
+        this->addView(toggle);
+
+        this->registerAction("Prev mode", brls::ControllerButton::BUTTON_LB, [this](brls::View *) {
+            cycle(-1);
+            return true;
+        });
+        this->registerAction("Next mode", brls::ControllerButton::BUTTON_RB, [this](brls::View *) {
+            cycle(1);
+            return true;
+        });
+
+        statusL = new brls::Label();
+        statusL->setText("Stopped");
+        statusL->setMarginTop(10.0f);
+        statusL->setMarginBottom(8.0f);
+        this->addView(statusL);
+
+        bar = new brls::Box(brls::Axis::ROW);
+        bar->setHeight(18.0f);
+        bar->setWidthPercentage(100.0f);
+        bar->setMarginBottom(14.0f);
+        barFill = new brls::Rectangle();
+        barFill->setColor(nvgRGB(0, 193, 210));
+        barFill->setWidthPercentage(0.0f);
+        barTrack = new brls::Rectangle();
+        barTrack->setColor(nvgRGB(48, 48, 54));
+        barTrack->setGrow(1.0f);
+        bar->addView(barFill);
+        bar->addView(barTrack);
+        this->addView(bar);
+
+        auto *h = new brls::Header();
+        h->setTitle("Live");
+        this->addView(h);
+        rowA = makeRow(this, "Loops");
+        rowB = makeRow(this, "Mismatches");
+        rowC = makeRow(this, "Detail");
+    }
+
+    void setProgress(float f) {
+        barFill->setWidthPercentage(f * 100.0f);
+    }
+
+    ~MemtesterTab() override {
+        stopAny();
+    }
+
+    void willDisappear(bool resetState = false) override {
+        stopAny();
+        brls::Box::willDisappear(resetState);
+    }
+
+    void frame(brls::FrameContext *ctx) override {
+        if (isGpu()) {
+            mt_gpu_status_t s;
+            mt_gpu_get(&s);
+            if (s.running || lastRunning) {
+                rowA->setText(fstru("%llu", (unsigned long long)s.loop));
+                rowB->setText(fstru("%llu", (unsigned long long)s.mismatches));
+                rowC->setText(fstru("%llu MB tested", (unsigned long long)s.size_mb));
+                statusL->setText(s.error ? std::string("Error: ") + s.status : std::string(s.status));
+            }
+            setProgress(0.0f);
+            syncToggle(s.running != 0);
+        } else {
+            mt_cpu_status_t s;
+            mt_cpu_get(&s);
+            if (mt_cpu_running() || lastRunning) {
+                rowA->setText(fstru("%llu", (unsigned long long)s.loop));
+                rowB->setText(fstru("%llu", (unsigned long long)s.mismatches));
+                char d[96];
+                if (mode == 1)
+                    std::snprintf(d, sizeof d, "%llu MB, burn-in x%llu",
+                                  (unsigned long long)s.total_mb, (unsigned long long)s.burnin_iters);
+                else
+                    std::snprintf(d, sizeof d, "%llu MB, %d threads",
+                                  (unsigned long long)s.total_mb, s.threads);
+                rowC->setText(d);
+                setProgress(mt_cpu_running() ? s.progress : 0.0f);
+                if (mt_cpu_running())
+                    statusL->setText(std::string(s.mismatches ? "Errors found! Running - " : "Running - ") +
+                                     (s.test ? s.test : ""));
+            }
+            syncToggle(mt_cpu_running() != 0);
+        }
+        brls::Box::frame(ctx);
+    }
+
+    private:
+    static const char *modeName(int m) {
+        switch (m) {
+            case 0: return "CPU - Memtester";
+            case 1: return "CPU - Memtester + BW Burn-in";
+            case 2: return "GPU - Memtester (Fast)";
+            case 3: return "GPU - Memtester (Full)";
+        }
+        return "";
+    }
+    bool isGpu() const {
+        return mode >= 2;
+    }
+    bool anyRunning() {
+        return mt_cpu_running() || mt_gpu_running();
+    }
+    void cycle(int dir) {
+        if (anyRunning())
+            return;
+        mode = (mode + dir + 4) % 4;
+        modeVal->setText(modeName(mode));
+    }
+    void onToggle() {
+        if (anyRunning())
+            stopAny();
+        else
+            startAny();
+    }
+    void startAny() {
+        rowA->setText("-");
+        rowB->setText("-");
+        rowC->setText("-");
+        switch (mode) {
+            case 0: mt_cpu_start(0); break;
+            case 1: mt_cpu_start(1); break;
+            case 2: mt_gpu_start(0); break;
+            case 3: mt_gpu_start(1); break;
+        }
+    }
+    void stopAny() {
+        if (mt_cpu_running())
+            mt_cpu_stop();
+        if (mt_gpu_running())
+            mt_gpu_stop();
+    }
+    void syncToggle(bool running) {
+        if (running == lastRunning)
+            return;
+        lastRunning = running;
+        toggle->setText(running ? "Stop" : "Start");
+        if (!running)
+            statusL->setText("Stopped");
+    }
+    int mode = 0;
+    bool lastRunning = false;
+    brls::Label *modeVal, *statusL, *rowA, *rowB, *rowC;
+    brls::Button *toggle;
+    brls::Box *bar;
+    brls::Rectangle *barFill, *barTrack;
+};
+
+class CreditsTab : public brls::Box {
+    public:
+    CreditsTab() {
+        this->setAxis(brls::Axis::COLUMN);
+        this->setGrow(1.0f);
+        this->setPadding(40.0f, 60.0f, 40.0f, 60.0f);
+
+        auto *title = new brls::Label();
+        title->setText("Benchmark Toolbox");
+        title->setFontSize(26.0f);
+        this->addView(title);
+
+        auto *by = new brls::Label();
+        by->setText("by Souldbminer");
+        by->setFontSize(16.0f);
+        by->setTextColor(nvgRGB(150, 150, 150));
+        by->setMarginBottom(12.0f);
+        this->addView(by);
+
+        auto *h = new brls::Header();
+        h->setTitle("Credits");
+        this->addView(h);
+
+        makeRow(this, "Memtester")->setText("Simon Kirby, Charles Cazabon, KazushiMe & CTCaer");
+        makeRow(this, "FurMark")->setText("AnxietyTimmy");
+        makeRow(this, "GPU Test")->setText("NaGaa95");
+        makeRow(this, "Membench")->setText("Siarhei Siamashka, KazushiMe & Lineon");
+        makeRow(this, "Stress-ng")->setText("ColinIanKing & Lineon");
+
+        auto *note = new brls::Label();
+        note->setText("Thanks to all the original authors.");
+        note->setFontSize(15.0f);
+        note->setTextColor(nvgRGB(150, 150, 150));
+        note->setMarginTop(18.0f);
+        this->addView(note);
+    }
+};
+
 class AppFrame : public brls::TabFrame {
     public:
     AppFrame() {
@@ -552,6 +772,7 @@ class MainActivity : public brls::Activity {
         tab->addSeparator();
         tab->addTab("Membench", [] { return new BenchTab(); });
         tab->addTab("GPU Test", [] { return new StressTab(); });
+        tab->addTab("Memtester", [] { return new MemtesterTab(); });
         tab->addSeparator();
         tab->addTab("Furmark", [] { return new FurmarkTab(0, "FurMark for Switch (48 step)"); });
         tab->addTab("Furmark RAM", [] { return new FurmarkTab(1, "FurMark with extra ram stress"); });
@@ -559,6 +780,8 @@ class MainActivity : public brls::Activity {
         tab->addTab("Black Hole", [] { return new FurmarkTab(3, "CPU+GPU black-hole."); });
         tab->addTab("CPU Ray Trace", [] { return new FurmarkTab(4, "CPU Path Tracer"); });
         tab->addTab("CPU RAM", [] { return new FurmarkTab(5, "CPU RT with extra RAM stress"); });
+        tab->addSeparator();
+        tab->addTab("Credits", [] { return new CreditsTab(); });
         return tab;
     }
 };
@@ -580,6 +803,16 @@ int main(int argc, char *argv[]) {
 
     while (brls::Application::mainLoop())
         ;
+
+    // Global quit (+) can return from the main loop without destroying the
+    // activity, leaving background workers (and their threads / large RAM
+    // allocations) live across _exit. Tear them down first.
+    if (run_furmark_running())
+        run_furmark_stop();
+    if (mt_gpu_running())
+        mt_gpu_stop();
+    if (mt_cpu_running())
+        mt_cpu_stop();
 
     _exit(EXIT_SUCCESS);
 }

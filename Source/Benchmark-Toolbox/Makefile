@@ -12,14 +12,14 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	Benchmark-Toolbox
 BUILD		:=	build
-SOURCES		:=	source source/furmark
+SOURCES		:=	source source/furmark source/memtester
 DATA		:=	data
 ICON		:=	icon.jpg
-INCLUDES	:=	source source/furmark ../hoc-clk/common/include
+INCLUDES	:=	source source/furmark source/memtester ../hoc-clk/common/include
 
 APP_TITLE	:=	Benchmark Toolbox
 APP_AUTHOR	:=	Horizon-OC, KazushiMe, Souldbminer
-APP_VERSION	:=	1.0.0
+APP_VERSION	:=	2.0.0
 
 ROMFS			:=	resources
 BOREALIS_PATH	:=	lib/borealis
