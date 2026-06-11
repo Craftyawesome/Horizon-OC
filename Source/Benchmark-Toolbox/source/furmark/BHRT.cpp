@@ -1064,6 +1064,10 @@ static std::chrono::time_point<std::chrono::high_resolution_clock> s_frameStartT
 static std::atomic<float> s_currentCpuFps{ 0.0f };
 static std::atomic<float> s_lastCpuLatencyMs{ 0.0f };
 
+extern "C" float bhrt_cpu_fps(void) {
+    return s_currentCpuFps.load(std::memory_order_acquire);
+}
+
 alignas(64) static float s_deflectBuf[2][DEFLECT_W * DEFLECT_H * 4];
 static std::atomic<int> s_deflectReadBuf{ 0 };
 static std::atomic<bool> s_deflectReady{ true };

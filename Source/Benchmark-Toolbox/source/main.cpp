@@ -442,7 +442,18 @@ class FurmarkTab : public brls::Box {
 
         auto *info = new brls::Label();
         info->setText(desc);
+        info->setMarginBottom(8.0f);
         this->addView(info);
+
+        auto *h = new brls::Header();
+        h->setTitle("Info");
+        this->addView(h);
+        if (which == 3) {
+            gpuFpsL = makeRow(this, "GPU FPS");
+            cpuFpsL = makeRow(this, "CPU FPS");
+        } else {
+            gpuFpsL = makeRow(this, "FPS");
+        }
     }
 
     ~FurmarkTab() override {
@@ -462,6 +473,16 @@ class FurmarkTab : public brls::Box {
             shown = r;
             toggle->setText(r ? "Stop" : "Start");
             statusL->setText(r ? "Running..." : "Stopped");
+            if (!r) {
+                gpuFpsL->setText("-");
+                if (cpuFpsL)
+                    cpuFpsL->setText("-");
+            }
+        }
+        if (r) {
+            gpuFpsL->setText(fstr("%.1f", run_furmark_fps()));
+            if (cpuFpsL)
+                cpuFpsL->setText(fstr("%.1f", run_furmark_cpu_fps()));
         }
         brls::Box::frame(fc);
     }
@@ -477,6 +498,8 @@ class FurmarkTab : public brls::Box {
     bool shown = false;
     brls::Button *toggle;
     brls::Label *statusL;
+    brls::Label *gpuFpsL = nullptr;
+    brls::Label *cpuFpsL = nullptr;
 };
 
 class MemtesterTab : public brls::Box {
@@ -890,6 +913,9 @@ class MainActivity : public brls::Activity {
         tab->setIconFromRes("img/logo.png");
         tab->addTab("System Info", [] { return new SysInfoTab(); });
 
+        tab->addHeader("Combined");
+        tab->addTab("Black Hole", [] { return new FurmarkTab(3, "CPU+GPU black-hole."); });
+
         tab->addHeader("CPU");
         tab->addTab("CPU Stress", [] { return new CpuStressTab(); });
         tab->addTab("CPU Ray Trace", [] { return new FurmarkTab(4, "CPU Path Tracer"); });
@@ -898,7 +924,6 @@ class MainActivity : public brls::Activity {
         tab->addTab("GPU Test", [] { return new StressTab(); });
         tab->addTab("Furmark", [] { return new FurmarkTab(0, "FurMark for Switch (48 step)"); });
         tab->addTab("GPU Path Trace", [] { return new FurmarkTab(2, "GPU Path Tracer"); });
-        tab->addTab("Black Hole", [] { return new FurmarkTab(3, "CPU+GPU black-hole."); });
 
         tab->addHeader("RAM");
         tab->addTab("Memtester", [] { return new MemtesterTab(); });

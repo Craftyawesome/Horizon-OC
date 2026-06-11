@@ -33,6 +33,8 @@ namespace {
     std::thread g_thread;
     std::atomic<bool> g_stop{ false };
     std::atomic<bool> g_running{ false };
+    std::atomic<float> g_fps{ 0.0f };
+    std::atomic<int> g_which{ -1 };
 
     EGLDisplay s_dpy = EGL_NO_DISPLAY;
     EGLContext s_ctx = EGL_NO_CONTEXT;
@@ -161,8 +163,11 @@ namespace {
     }
 
     void worker(int which) {
+        g_which.store(which);
+        g_fps.store(0.0f);
         if (!eglUp()) {
             eglDown();
+            g_which.store(-1);
             g_running.store(false);
             return;
         }
@@ -184,6 +189,8 @@ namespace {
         sceneInit(which);
 
         const u64 frameNs = 16666666ULL;
+        u64 fpsT0 = armGetSystemTick();
+        int fpsFrames = 0;
         while (!g_stop.load()) {
             u64 t0 = armGetSystemTick();
             glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -203,6 +210,14 @@ namespace {
             u64 dt = armTicksToNs(armGetSystemTick() - t0);
             if (dt < frameNs)
                 svcSleepThread(frameNs - dt);
+
+            fpsFrames++;
+            u64 elapsed = armTicksToNs(armGetSystemTick() - fpsT0);
+            if (elapsed >= 500000000ULL) {
+                g_fps.store((float)((double)fpsFrames * 1.0e9 / (double)elapsed));
+                fpsFrames = 0;
+                fpsT0 = armGetSystemTick();
+            }
         }
         sceneExit(which);
 
@@ -210,6 +225,8 @@ namespace {
         glDeleteRenderbuffers(1, &rbColor);
         glDeleteRenderbuffers(1, &rbDepth);
         eglDown();
+        g_fps.store(0.0f);
+        g_which.store(-1);
         g_running.store(false);
     }
 
@@ -236,4 +253,14 @@ extern "C" void run_furmark_stop(void) {
 
 extern "C" int run_furmark_running(void) {
     return g_running.load() ? 1 : 0;
+}
+
+extern "C" float bhrt_cpu_fps(void);
+
+extern "C" float run_furmark_fps(void) {
+    return g_fps.load();
+}
+
+extern "C" float run_furmark_cpu_fps(void) {
+    return (g_running.load() && g_which.load() == 3) ? bhrt_cpu_fps() : 0.0f;
 }
