@@ -56,6 +56,7 @@ typedef enum {
     HocClkConfigValue_DVFSOffset,
     HocClkConfigValue_LiveCpuUv,
     HocClkConfigValue_EnableExperimentalSettings,
+    HocClkConfigValue_HiddenProfilesMask,
 
     HocClkConfigValue_GPUScheduling,
     HocClkConfigValue_GPUSchedulingMethod,
@@ -291,6 +292,9 @@ static inline const char* hocclkFormatConfigValue(HocClkConfigValue val, bool pr
 
         case HocClkConfigValue_EnableExperimentalSettings:
             return pretty ? "Enable Experimental Settings" : "enable_experimental_settings";
+        
+        case HocClkConfigValue_HiddenProfilesMask:
+            return pretty ? "Hidden Profiles Mask" : "hidden_profiles_mask";
 
         case HocClkConfigValue_RAMVoltDisplayMode:
             return pretty ? "RAM Voltage / Usage Display Mode" : "ram_volt_usage_display_mode";
@@ -555,6 +559,8 @@ static inline uint64_t hocclkDefaultConfigValue(HocClkConfigValue val)
             return 0ULL;
         case HocClkConfigValue_RamDisplayUnit:
             return (uint64_t)RamDisplayUnit_MHz;
+        case HocClkConfigValue_HiddenProfilesMask:
+            return 2ULL;
         case HocClkConfigValue_EristaMaxCpuClock:
             return 1785ULL;
 

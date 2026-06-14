@@ -350,8 +350,17 @@ void AppProfileGui::addProfileUI(HocClkProfile profile)
         FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
         return;
     }
-    if((profile == HocClkProfile_Docked && IsHoag()) || profile == HocClkProfile_HandheldCharging)
+    if(profile == HocClkProfile_Docked && IsHoag())
         return;
+    uint32_t mask = configList.values[HocClkConfigValue_HiddenProfilesMask];
+    if((mask & (1 << profile))) {
+        bool profilePopulated = this->profileList->mhzMap[profile][HocClkModule_CPU] != 0 || 
+                                this->profileList->mhzMap[profile][HocClkModule_GPU] != 0 || 
+                                this->profileList->mhzMap[profile][HocClkModule_MEM] != 0 ||
+                                this->profileList->mhzMap[profile][HocClkModule_Governor] != 0;  
+        if(!profilePopulated)
+            return;
+    }
     this->listElement->addItem(new tsl::elm::CategoryHeader(hocclkFormatProfile(profile, true) + std::string(" ") + ult::DIVIDER_SYMBOL + " \ue0e3 Reset"));
     this->addModuleListItem(profile, HocClkModule_CPU);
     this->addModuleListItem(profile, HocClkModule_GPU);
