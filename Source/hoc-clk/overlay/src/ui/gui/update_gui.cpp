@@ -189,7 +189,7 @@ void UpdateGui::listUI() {
     BaseMenuGui::refresh();
     if (!this->context) return;
 
-    this->listElement->addItem(new tsl::elm::CategoryHeader("Packages"));
+    this->listElement->addItem(new tsl::elm::CategoryHeader("Releases"));
 
     for (int i = 0; i < 2; ++i) {
         auto *item = new tsl::elm::ListItem(kPackages[i].displayName);
