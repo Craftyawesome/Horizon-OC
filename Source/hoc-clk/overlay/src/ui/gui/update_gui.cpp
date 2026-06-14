@@ -159,7 +159,7 @@ void UpdateGui::jobBody() {
         if (!ok || ult::abortDownload.load(std::memory_order_acquire)) {
             m_resultMessage = ult::abortDownload.load(std::memory_order_acquire)
                 ? "Download cancelled"
-                : "Download failed \u2014 check network";
+                : "Download failed -- check network";
             m_stage.store(
                 ult::abortDownload.load() ? UpdateStage::Cancelled : UpdateStage::Failed,
                 std::memory_order_release);
@@ -173,7 +173,7 @@ void UpdateGui::jobBody() {
     if (!ok || ult::abortUnzip.load(std::memory_order_acquire)) {
         m_resultMessage = ult::abortUnzip.load(std::memory_order_acquire)
             ? "Extraction cancelled"
-            : "Extraction failed \u2014 archive may be corrupt";
+            : "Extraction failed -- archive may be corrupt";
         m_stage.store(
             ult::abortUnzip.load() ? UpdateStage::Cancelled : UpdateStage::Failed,
             std::memory_order_release);
