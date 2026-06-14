@@ -180,6 +180,8 @@ void UpdateGui::jobBody() {
         return;
     }
 
+    std::remove(pkg.zipPath);
+
     m_resultMessage = "Update complete! Restart required.";
     m_stage.store(UpdateStage::Done, std::memory_order_release);
 }
