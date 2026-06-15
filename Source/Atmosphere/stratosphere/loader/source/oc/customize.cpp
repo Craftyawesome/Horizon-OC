@@ -65,8 +65,14 @@ volatile CustomizeTable C = {
 
 /* Frequency where non low timings gets used. */
 .timingEmcTbreak = DISABLED,
-.low_t6_tRTW = 0,
-.low_t7_tWTR = 0,
+.low_t1_tRCD  = 0,
+.low_t2_tRP   = 0,
+.low_t3_tRAS  = 0,
+.low_t4_tRRD  = 0,
+.low_t5_tRFC  = 0,
+.low_t6_tRTW  = 0,
+.low_t7_tWTR  = 0,
+.low_t8_tREFI = 0,
 
 .readLatency = {
     /* 1333 */ 0,
