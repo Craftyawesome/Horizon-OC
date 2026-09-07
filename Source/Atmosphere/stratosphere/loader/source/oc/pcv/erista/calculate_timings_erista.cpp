@@ -175,7 +175,7 @@ namespace ams::ldr::hoc::pcv::erista {
         /* I don't understand why, I don't want to know why, but for some fucking reason erista doesn't handle RL 40. */
         /* This should not be required but for these fuck damn reasons any type of dram oc will crash instantly with RL 40. */
         /* But it works fine in l4t? Even when copying the tables it still doesn't work??? WTF */
-        readLatency[std::size(readLatency) - 1] = 0;
+        C.readLatency[std::size(C.readLatency) - 1] = 0;
         HandleLatency(freq);
         RL = std::min(static_cast<u32>(RL_1866), RL);
 
